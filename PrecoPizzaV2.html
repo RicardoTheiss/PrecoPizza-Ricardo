@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparação de Pizzas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <header class="container mt-3">
+        <div class="btn-group" data-toggle="buttons">
+            <label class="btn btn-primary active">
+                <input type="radio" name="nmEscolha" onclick="habilitarTela1()" checked> Cadastrar
+            </label>
+            <label class="btn btn-primary">
+                <input type="radio" name="nmEscolha" onclick="habilitarTela2()"> Consultar
+            </label>
+        </div>
+    </header>
+
+    <main class="container mt-3">
+        <div id="idTelaCadastro" class="mb-3">
+            <form>
+                <div class="mb-3">
+                    <label for="idNome" class="form-label">Insira o nome comercial do tamanho</label>
+                    <input type="text" id="idNome" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <input type="radio" id="idCircular" name="nmForma" onclick="habilitarCirculo()" checked>
+                    <label for="idCircular">Pizza Circular</label>
+                    <input type="radio" id="idRetangular" name="nmForma" onclick="habilitarRetangulo()">
+                    <label for="idRetangular">Pizza Retangular</label>
+                    <input type="number" id="idDiametro" class="form-control" placeholder="Insira o diâmetro da pizza (cm)">
+                    <input type="number" id="idAltura" class="form-control" placeholder="Insira a altura da pizza (cm)" style="display: none;">
+                    <input type="number" id="idLargura" class="form-control" placeholder="Insira a largura da pizza (cm)" style="display: none;">
+                </div>
+                <div class="mb-3">
+                    <label for="idPreco" class="form-label">Insira o preço da pizza (R$)</label>
+                    <input type="number" id="idPreco" class="form-control">
+                </div>
+                <button id="idBotao" class="btn btn-primary">Lançar Cadastro</button>
+            </form>
+        </div>
+
+        <div id="idTelaConsulta" style="display:none;">
+            <table class="table table-bordered mt-4">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Tam. (cm²)</th>
+                        <th>Preço (R$)</th>
+                        <th>R$ p/cm²</th>
+                        <th>Diferença%</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaCorpo"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+    <script>
+        document.getElementById("idTelaCadastro").style.display = "none";
+        document.getElementById("idTelaConsulta").style.display = "none";
+
+        function habilitarTela1() {
+            document.getElementById("idTelaCadastro").style.display = "block";
+            document.getElementById("idTelaConsulta").style.display = "none";
+        }
+
+        function habilitarTela2() {
+            document.getElementById("idTelaCadastro").style.display = "none";
+            document.getElementById("idTelaConsulta").style.display = "block";
+            atualizarRelatorio();
+        }
+
+        let pizzas = [];
+
+        let botao = document.getElementById("idBotao");
+
+        function habilitarCirculo() {
+            document.getElementById("idDiametro").style.display = "block";
+            document.getElementById("idAltura").style.display = "none";
+            document.getElementById("idLargura").style.display = "none";
+        }
+
+        function habilitarRetangulo() {
+            document.getElementById("idDiametro").style.display = "none";
+            document.getElementById("idAltura").style.display = "block";
+            document.getElementById("idLargura").style.display = "block";
+        }
+
+        botao.onclick = function () {
+            let nomeInput = document.getElementById("idNome").value;
+            let precoInput = Number(document.getElementById("idPreco").value);
+
+            let pizza = {
+                nome: nomeInput,
+                forma: document.querySelector('input[name="nmForma"]:checked').value,
+                diametro: parseFloat(document.getElementById("idDiametro").value),
+                altura: parseFloat(document.getElementById("idAltura").value),
+                largura: parseFloat(document.getElementById("idLargura").value),
+                preco: precoInput
+            };
+
+            function calcularCB(pizza) {
+                if (pizza.forma === "idCircular") {
+                    const area = Math.PI * (pizza.diametro / 2) ** 2;
+                    return pizza.preco / area;
+                } else {
+                    const area = pizza.altura * pizza.largura;
+                    return pizza.preco / area;
+                }
+            }
+
+            pizzas.push(pizza);
+
+            document.getElementById("idNome").value = "";
+            document.getElementById("idPreco").value = "";
+            document.getElementById("idAltura").value = "";
+            document.getElementById("idLargura").value = "";
+            document.getElementById("idDiametro").value = "";
+        }
+
+        function atualizarRelatorio() {
+            let tabelaCorpo = document.getElementById("tabelaCorpo");
+
+            if (tabelaCorpo) {
+                tabelaCorpo.innerHTML = "";
+
+                if (pizzas.length > 0) {
+                    pizzas.sort((a, b) => calcularCB(a) - calcularCB(b));
+
+                    for (let i = 0; i < pizzas.length; i++) {
+                        const pizza = pizzas[i];
+
+                        let row = tabelaCorpo.insertRow(i);
+                        let cellNome = row.insertCell(0);
+                        let cellTamanho = row.insertCell(1);
+                        let cellPreco = row.insertCell(2);
+                        let cellRPP = row.insertCell(3);
+                        let cellDiferenca = row.insertCell(4);
+
+                        let tamanho;
+                        if (pizza.forma === "idCircular") {
+                            tamanho = (Math.PI * (pizza.diametro / 2) ** 2).toFixed(2);
+                        } else {
+                            tamanho = (pizza.altura * pizza.largura).toFixed(2);
+                        }
+
+                        cellNome.innerHTML = pizza.nome;
+                        cellTamanho.innerHTML = tamanho;
+                        cellPreco.innerHTML = pizza.preco.toFixed(2);
+                        cellRPP.innerHTML = calcularCB(pizza).toFixed(2);
+
+                        if (i === 0) {
+                            cellDiferenca.innerHTML = "Melhor CB";
+                        } else {
+                            cellDiferenca.innerHTML = "-" + (((calcularCB(pizza) - calcularCB(pizzas[0])) / calcularCB(pizzas[0])) * 100).toFixed(2) + "%";
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
